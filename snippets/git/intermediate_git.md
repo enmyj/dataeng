@@ -39,12 +39,40 @@ WTF is this doing?
 2. Treats the local version of the branch as a "separate" branch
 3. Merges the commits from the local branch into the remote branch using "3-way" merge. The commit order during the merge is determined by the timestamp of the commit(s) on both branches.       
 
-Is this fine? Yes. But it makes the git history look hella stupid. If it's already too late and you've made the merge commit, do the following: 
+Is this fine? Yes. But it makes the git history look hella stupid. In the long run, it's preferable to use `git pull --rebase` as the pulling strategy instead. There are lots of ways to set "rebase pulls" as the default pulling strategy, but one option I like is to only allow git to pull when the branch can be "fast forwarded" (pulled with no merge commit). This can be done by setting the following:
+
+```bash
+git config --local pull.ff only
+```
+
+If it's already too late and you've made the merge commit, do the following: 
 ```
 git reset --soft origin/branch_name
 git commit -am "message"
 git push origin branch_name
 ```
+NOTE: This will not bomb changes made on the branch, but it will bomb all of the commits on the branch...
 
+---
+Is there any reason to merge `master` into `branch`? Only if you want dumb merge commits on your `branch`. Instead use `rebase`: 
+```bash
+git checkout branch
+
+# rebase against the local version of master
+git rebase master 
+
+# rebase against the remote version of master
+git fetch --all
+git rebase origin/master
+```
+https://stackoverflow.com/questions/16955980/git-merge-master-into-feature-branch
+
+
+---
+Eliminate changes from tracked files    
+`git checkout /path/to/file`
+
+Eliminate changes from untracked files (and deletes file)
+`git clean -f /path/to/file/`
 
 
