@@ -1,3 +1,7 @@
+# Note: these instructions are not actually recommended
+# Better instructions to follow...
+
+
 ### Config Files and Packages ##
 # Loosely based on these instructions:
 # https://github.com/mkleehammer/pyodbc/wiki/Connecting-to-SQL-Server-from-Mac-OSX
