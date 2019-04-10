@@ -114,3 +114,16 @@ git status
 
 # file should be shown in "untracked files" 
 ```
+
+# Quick Tips:
+
+Eliminate changes from tracked files    
+```
+git checkout /path/to/file
+```
+Note: it's confusing that checkout is used to switch branches, move to specific commits, and elimiate changes from specific files, but I'm sure it make sense under the hood??
+
+Eliminate changes from untracked files (and deletes file)
+```
+git clean -f /path/to/file/
+```
