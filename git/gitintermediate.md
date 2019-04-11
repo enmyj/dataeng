@@ -76,7 +76,7 @@ git push origin branch_name
 NOTE: This will not bomb changes made on the branch, but it will bomb all of the commits on the branch...
 
 ---
-## Rebase vs. Merge (basics)
+## `git rebase` vs. `git merg` (basics)
 
 My opinion is that if you are using the proper branching strategy and you understand the git commands you are typing, rebasing is preferable. 
 
@@ -93,7 +93,7 @@ https://stackoverflow.com/questions/16955980/git-merge-master-into-feature-branc
 
 Example: You create a branch off `master` and make a few of commits on it. Then, a pull request with some code you'd like to use is merged into `master`, creating a new commit. Since your code was branched off of an older commit on master, you need a way to incorporate this new commit into your branch.  
 
-Rebase:
+## Rebase:
 ```bash
 # update local with changes made to remote
 git fetch --all
@@ -114,8 +114,18 @@ git push origin branch_name -f
 # coworkers can update their version of branch by running
 git reset --hard origin/branch_name
 ```
+Commits "three" and "five" are from `master` in the following `git log`
+```
+d6312bc (HEAD -> example) six
+7d0cac5 four
+588433e two
+6d49c9c one
+ca3cec2 (master) five
+cb16119 three
+ed5df94 (origin/master, origin/HEAD) Create file3.txt
+```
 
-Merge:
+## Merge:
 ```bash
 # update local with changes made to remote
 git fetch --all
@@ -129,8 +139,17 @@ git checkout branch_name
 git merge master
 
 # resolve any conflicts and save merge commit in vim or whatever
-# force push??
+# no force push required
 git push origin branch_name
 ```
-
-To be continued once I have internet access...
+Commits "three" and "five" are from `master` in the following `git log`
+```
+ef385a9 (HEAD -> example, origin/example) Merge branch 'master' into example
+3b387fe six
+ca3cec2 (master) five
+16a0276 four
+cb16119 three
+eb7b664 two
+44eb54c one
+ed5df94 (origin/master, origin/HEAD) Create file3.txt
+```
