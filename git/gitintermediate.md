@@ -64,19 +64,18 @@ Is this OK?? Yes...
 However, it makes the git history much harder for others to follow. In the long run it's preferable to use `git pull --rebase` as the pulling strategy instead. There are lots of ways to set "rebase pulls" as the default pulling strategy, but one option I like is to only allow git to pull when the branch can be "fast forwarded" (pulled with no merge commit). This can be done by setting the following:
 
 ```bash
-git config --local pull.ff only
+git config --global pull.ff only
 ```
 
 If it's already too late and you've made the merge commit, but you are desparate to remove the merge commit, you can do the following: 
 ```
-git reset --soft origin/branch_name
-git commit -m "message"
-git push origin branch_name
+git reset --hard HEAD~1 # removes merge commit
+git pull --rebase # rebases local work onto origin/branch
+git push origin branch_name # pushes local commits to origin/branch
 ```
-NOTE: This will not bomb changes made on the branch, but it will bomb all of the commits on the branch...
 
 ---
-## `git rebase` vs. `git merg` (basics)
+## `git rebase` vs. `git merge` (basics)
 
 My opinion is that if you are using the proper branching strategy and you understand the git commands you are typing, rebasing is preferable. 
 
