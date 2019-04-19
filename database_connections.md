@@ -81,7 +81,7 @@ The following example will create an interactive session against a postgres data
 psql -h localhost -p 5432 -d TEST -U ian.myjer
 ```
 
-The following example will run a local sql script against a postgres database running locally:
+The following example will run a local sql script against a postgres database, running locally:
 ```bash
 psql -h localhost -p 5432 -d TEST -U ian.myjer --file=/path/to/sql_script.sql
 ```
@@ -91,19 +91,36 @@ Database command line tools are best for the following tasks:
   1. Running queries interactively when a database GUI is not permitted or not available
   2. Running database (SQL) scripts as part of a shell script or pipeline
 
+## Database Password Security in Python/R
+---
+
+The practice of securely passing a password to a python/R script without having it end up in a public `git` repository used to befuddle me - until I was shown [this Rstudio blog](https://db.rstudio.com/best-practices/managing-credentials/) on securing credentials. It lists, from most to least secure, the various ways to store passwords in scripts. Both R and python offer the `keyring` package, which works with Mac (Keychain) and Windows (Credential Store/Manager) natively and on Linux by installing the `libsecret` package.
+
+Passwords can be set securly using the appropriate Key Store GUI. 
+
+Or, using `python` interactively:
+```python
+>>> import keyring
+>>> import getpass
+>>> keyring.set_password('unique_name_of_password','username',getpass.getpass())
+Password: <type password, not stored in command history>
+```
+
+Or, using `R` interactively:
+```R
+library(keyring)
+key_set('unique_name_of_password','username')
+# type password in little box that pops up
+```
+
+Similar code can also be used to set the password from the command line. Be careful about leaking the password into the command history. 
+
 ## Connecting through Python
 ---
 
-The best/easiest way to connect to a database from python is using `sqlalchemy`. SQL alchemy can be installed the usual way using `pip` or `conda`. For major databases such as `postgres` or `mysql`, connections can be established without the need to install external packages. [sqlalchemy reference documentation](https://docs.sqlalchemy.org/en/13/core/engines.html)
+The best/easiest way to connect to a database from python is using `sqlalchemy`. sqlalchemy can be installed the usual way using `pip` or `conda`. For major databases such as `postgres` or `mysql`, connections can be established without the need to install external packages. [sqlalchemy reference documentation](https://docs.sqlalchemy.org/en/13/core/engines.html)
 
-The `sqlalchemy` package consistes of two universes - ORM and Core. ORM is designed to be used as the backend for python-based web applications and therefore has a different and more complex usage pattern. For most (all?) analytical use cases, the `sqlalchemy` core is the best and easiest to use. 
-
-Note on password security: The practice of securely passing a password to a python script with having it end up in a public `git` repository used to befuddle me - until I was shown [this Rstudio blog](INSERT LINK) on securing credentials. It lists, from most to least secure, the various ways to store passwords in scripts. The equivalent package to the INSERT R PACKAGE is python's `keyring`. 
-
-Passwords can be set securly using the keyring GUI or using:
-```python
-EXAMPLE
-```
+The `sqlalchemy` package consistes of two universes - ORM and Core. ORM is designed to be used as the backend for python applications and therefore has a different and more complex usage pattern. For most (all?) analytical use cases, the `sqlalchemy` core is the best and easiest to use. 
 
 Below is a basic database connection example: 
 
@@ -117,22 +134,17 @@ import pandas as pd
 # set database connection string
 # assumes password has been set using appropriate keyring backend
 username = "ian.myjer"
-password = keyring.get_password(
-    service_name = 'test', 
-    username = username)
 host = "localhost"
 database = "foo"
 port = "3306"
 
-conn_str = 'mysql://{username}:{password}@{host}:{port}/{database}'.format(
+# create sqlalchemy engine
+engine = create_engine('mysql://{username}:{password}@{host}:{port}/{database}'.format(
     username = username,
-    password = password,
+    password = keyring.get_password(service_name = 'unique_name_of_password', username = username),
     host = host,
     port = port,
-    database = database)
-
-# create sqlalchemy engine
-engine = create_engine(conn_str)
+    database = database))
 
 # create a connection and issue a sql query
 # storing results in res variable
@@ -158,14 +170,14 @@ df.to_sql(
     index=False)
 ```
 
-CONNECTING through python JDBC??
+Database connections can also be made directly with `odbc` and `jdbc` directly using the `pyodbc` and `jaydebeapi` packages, respectively. 
 
 ## Connecting through R
 ---
 
-The Rstudio blog has good documentation for connecting to databases [here](insert link). However, less popular databases are not well covered. Below is a basic example of connecting to a `db2` database using `JDBC`. 
+The Rstudio blog has great [documentation](https://db.rstudio.com/getting-started/connect-to-database/) for connecting to databases. However, less popular databases are not well covered. Below is a basic example of connecting to a `db2` database using `JDBC`. 
 
-As mentioned in the Rstudio securing credentials [documentation](UPDATE ME), the `config` package can be useful for managing database connections. 
+As mentioned in the Rstudio securing credentials [documentation](https://db.rstudio.com/best-practices/managing-credentials/), the `config` package can be useful for managing database connection parameters.
 
 config.yaml
 ```yaml
@@ -184,7 +196,7 @@ dope_script.R
 library(DBI)
 library(RJDBC)
 library(config)
-library(NAME OF KEYCHAIN PACKAGE)
+library(keyring)
 
 # get database configurations from config.yml file
 conf <- config::get()
@@ -195,14 +207,9 @@ jcc <- RJDBC::JDBC("com.ibm.db2.jcc.DB2Driver", conf$database$driver_path)
 # configure connection
 conn <- RJDBC::dbConnect(
   drv = jcc,
-  url = paste0("jdbc:db2://", 
-    conf$database$host, 
-    ":", 
-    conf$database$port, 
-    "/", 
-    conf$database$database_name),
+  url = paste0("jdbc:db2://", conf$database$host, ":", conf$database$port, "/", conf$database$database_name),
   user = conf$database$username,
-  password = KEYCHAIN)
+  password = keychain::key_get('unique_name_of_password',conf$database$username))
 
 # send query to database and get results back
 results <- RJDBC::dbGetQuery(conn, 'select * from sysibm.systables')
@@ -221,21 +228,93 @@ RJDBC::dbWriteTable(
 RJDBC::dbDisconnect(conn)
 ```
 
-## Using ODBC
+## Configuring ODBC Connections
 ---
 
-FILL ME IN 
+### Windows
+
+Windows has a built-in ODBC driver manager which can be accessed by typing "ODBC Data Sources" into the Windows Start Menu. Note that there is a separate manager for 32-bit and 64-bit drivers and you'll need to match your driver style to the Software type (64-bit R must use 64-bit odbc drivers). Typically, an ODBC data source can be set up by first installing the appropriate drivers and then following the proper menus to set up the connection. The Driver Manager should provide the option to test the connection prior to attempting to run python or R scripts.
+
+### Mac
+
+1. Install the following packages:
+```bash
+brew update && brew install unixodbc mssql-tools
+```
+
+2. Edit (or create) this file: `~/.odbc.ini`
+```bash
+[DATA_SOURCE_NAME]
+Driver=ODBC Driver 17 for SQL Server
+Server=<server_name>
+Database=<db_name>
+Port=1433
+```
+
+### Linux
+1. Install the following packages:
+```bash
+curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+        && curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+
+apt-get update && ACCEPT_EULA=Y apt-get install -y unixodbc-dev msodbcsql17 mssql-tools
+```
+2. Edit (or create) the following file: `/etc/odbc.ini`
+```bash
+[DATA_SOURCE_NAME]
+Driver=ODBC Driver 17 for SQL Server
+Server=<server_name>
+Database=<db_name>
+Port=1433
+```
+
+`sqlcmd`
+```bash
+sqlcmd -S -D DSN_NAME -U ian.myjer -P
+```
+
+`Python`
+```python
+import pyodbc
+from sqlalchemy import create_engine
+from sqlalchemy import text
+import keyring
+
+engine = create_engine("mssql+pyodbc://ian.myjer:{pass}@DSN_NAME".format(pass=keyring.get_password('pass_key','ian.myjer')))
+
+with engine.begin() as conn:
+    res = conn.execute(text('select @@version')).fetchall()
+```
+
+`R`
+```R
+library(DBI)
+library(odbc)
+library(keychain)
+
+conn <- DBI::dbConnect(
+  odbc(), 
+  DSN = 'DSN_NAME',
+  user = 'ian.myjer',
+  password = keychain::key_get('unique_name_of_password','ian.myjer'))
+```
+
 
 ## Connecting to Microsoft SQL Server using Kerberos Authentication from a Mac or Linux
 ---
 
-My experience using Microsoft SQL Server running in a Windows environment is that DBAs usually set up user credentials using Windows (Kerberos) Authentication. As a user on a Windows computer that is connected to this domain, this is pretty straightforward. But, using a Windows computer not connected to the Kerberos domain is a pain in the ass. And using a Mac or Linux computer not connected to the domain is even worse. 
+My experience using Microsoft SQL Server running in a Windows environment is that DBAs usually set up user credentials using Windows (Kerberos) Authentication. This is generally a pain in the ass but here we are:
 
 ### Windows Computer Not on Domain
-FILL ME IN 
 
+It seems like the play is to run `python` or `R` using something: `runas /netonly` [link](https://dba.stackexchange.com/questions/66014/connect-to-sql-server-with-windows-authentication-in-a-different-domain). Seems like there should be a better way though...
 
 ### Mac/Linux Computer Not on Domain
+
+On Mac, Kerberos is installed by default. On Linux, it can be installed by running: 
+```bash 
+apt install -y krb5-user
+```
 
 I've found the Kerberos documentation to be terrible and internet sources on the subject to be rather sparse. This is the best documentation I've found [link](https://kb.iu.edu/d/aumh#create). Note: Domain must be in ALL CAPS for some reason
 
@@ -257,27 +336,61 @@ quit
 kinit ian.myjer@DOMAIN.COM -k -t ~/ian.myjer.keytab
 ```
 
-The Microsoft [documentation](insert link) recommends putting the last command on a `crontab` so that a Kerberos ticket (TGT?) can re-requested prior to expiration. I did some basic testing and verified that nothing happens if you re-request the ticket in the middle of a query.   
+The Microsoft [documentation](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/using-integrated-authentication?view=sql-server-2017) recommends putting the last command on a `crontab` so that a Kerberos ticket (TGT?) can be re-requested prior to expiration. I did some basic testing and verified that nothing happens if you re-request the ticket in the middle of a query. The other option is to run the `kinit` command as a subprocess from inside the appropriate script, and then run the database commands. This feels less ideal to me but overall seems fine. 
 
-The other option is to run the `kinit` command as a subprocess from inside the appropriate script, and then run the database commands. This feels less ideal to me but oerall seems fine. 
+Once a ticket has been requested, connections can be established in python/R using the appropriate `odbc` packages. On Mac/Linux, the DSN Entry would look like: 
 
-Once a ticket has been requested, connections can be established in python/R using the appropriate `odbc` packages
+Mac DSN: `~/.odbc.ini`.  
+Linux DSN: `/etc/odbc.ini`
+```
+[DSN_NAME]
+Driver=ODBC Driver 17 for SQL Server
+Server=<server_name>
+Database=<db_name>
+Port=1433
+Trusted_Connection=yes
+```
 
-Python
+`sqlcmd`
+```bash
+sqlcmd -E -S -D DSN_NAME
+```
+
+`Python`
 ```python
 import pyodbc
 from sqlalchemy import create_engine
 from sqlalchemy import text
+import urllib
 
-conn_str = 'mssql+pyodbc://FILL ME IN'
-engine = create_engine(conn_str)
+# sqlalchemy with DSN (preferred)
+engine = create_engine("mssql+pyodbc://DSN_NAME")
+
+# sqlalchemy without DSN
+params = urllib.parse.quote_plus("DRIVER={ODBC Driver 17 for SQL Server};SERVER=<SERVER NAME>;Trusted_Connection=yes")
+engine = create_engine("mssql+pyodbc:///?odbc_connect={params}".format(params=params))
+
+with engine.begin() as conn:
+    res = conn.execute(text('select @@version')).fetchall()
+
+# pyodbc
+conn_str = 'DRIVER={ODBC Driver 17 for SQL Server};SERVER=<SERVER NAME>Trusted_Connection=yes;'
+conn = pyodbc.connect(conn_str)
+cursor = conn.cursor()
+cursor.fast_executemany = True
 ```
 
-R
+`R`
 ```R
 library(DBI)
 library(odbc)
 
+# With DSN
+conn <- DBI::dbConnect(
+  odbc(), 
+  DSN = 'DSN_NAME')
+
+# Without DSN
 conn <- DBI::dbConnect(
   odbc(), 
   Driver = "ODBC Driver 17 for SQL Server", 
@@ -285,4 +398,3 @@ conn <- DBI::dbConnect(
   Trusted_Connection = "yes", 
   Database = "database_name")
 ```
-
