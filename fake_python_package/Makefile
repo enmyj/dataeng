@@ -1,7 +1,7 @@
 # setup
 init:
 	# conda install -f environment.yml --prune
-	# conda activate fakeproj
+	# conda activate fakepkg
 	pip install -e .
 
 install:
@@ -9,8 +9,8 @@ install:
 
 # teardown
 uninstall:
-	pip uninstall -y fakeproj
-	rm -rf fakeproj.egg-info
+	pip uninstall -y fakepkg
+	rm -rf fakepkg.egg-info
 	rm -rf .pytest_cache
 
 # tests

@@ -1,5 +1,5 @@
 import pytest
-from fakeproj.subprojone.dingus import dingus
+from fakepkg.subpkgone.dingus import dingus
 
 
 def test_dingus_string():

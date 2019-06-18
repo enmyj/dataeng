@@ -1,4 +1,4 @@
-from fakeproj.subprojone.dingus import dingus
+from fakepkg.subpkgone.dingus import dingus
 import click
 
 

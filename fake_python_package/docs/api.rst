@@ -3,13 +3,13 @@
 Interface
 ===================
 
-.. autofunction:: fakeproj.subprojone.dingus.dingus
+.. autofunction:: fakepkg.subpkgone.dingus.dingus
 
-.. autoclass:: fakeproj.subprojone.moduleone.Foo
+.. autoclass:: fakepkg.subpkgone.moduleone.Foo
     :members:
-.. autofunction:: fakeproj.subprojone.moduleone.concat
+.. autofunction:: fakepkg.subpkgone.moduleone.concat
 
-.. automodule:: fakeproj.subprojtwo.module_debug
-.. autofunction:: fakeproj.subprojtwo.module_debug.bar
-.. autofunction:: fakeproj.subprojtwo.module_debug.data_science
-.. autofunction:: fakeproj.subprojtwo.module_debug.bad_function
+.. automodule:: fakepkg.subpkgtwo.module_debug
+.. autofunction:: fakepkg.subpkgtwo.module_debug.bar
+.. autofunction:: fakepkg.subpkgtwo.module_debug.data_science
+.. autofunction:: fakepkg.subpkgtwo.module_debug.bad_function

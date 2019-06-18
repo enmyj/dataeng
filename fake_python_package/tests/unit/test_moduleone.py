@@ -1,5 +1,5 @@
 import pytest
-from fakeproj.subprojone.moduleone import Foo
+from fakepkg.subpkgone.moduleone import Foo
 
 
 def test_foo():

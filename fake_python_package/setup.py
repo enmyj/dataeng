@@ -8,7 +8,7 @@ def main():
             return _in.read()
 
     setup(
-        name="fakeproj",
+        name="fakepkg",
         version="1.0",
         author="author",
         author_email="xyz@gmail.com",
@@ -17,7 +17,7 @@ def main():
         packages=find_packages(),
         entry_points={
             'console_scripts': [
-                'fakeproj = fakeproj.main:main']}
+                'fakepkg = fakepkg.main:main']}
     )
 
 if __name__ == "__main__":
